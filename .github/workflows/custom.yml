@@ -12,6 +12,12 @@ jobs:
     - uses: actions/checkout@v4
       with:
           submodules: recursive
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@63069e3931dedbf3b63792097479563182fe70d1 # v1.2.18
+      with:
+        key: linux
+        create-symlink: true
           
     - name: Install dependencies
       run: |
@@ -34,7 +40,17 @@ jobs:
         echo "Site(s) = $(python3 -m site)"
         
     - name: Build
+      env:
+        #CC: clang
+        #CXX: clang++
+        USE_CCACHE: 1
       run: |
+        export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+        export CCACHE_SLOPPINESS=time_macros,pch_defines,clang_index_store,ivfsoverlay,include_file_ctime,include_file_mtime,modules,system_headers
+        export CCACHE_FILECLONE=true
+        export CCACHE_DEPEND=true
+        export CCACHE_COMPILERCHECK=content
+        
         source .venv/bin/activate
         SITE_PATH=$(find . -name "site-packages" -print -quit 2>/dev/null)
         echo "SITE_PATH = $SITE_PATH"
@@ -44,6 +60,7 @@ jobs:
         cd build
         cmake -DCMAKE_PREFIX_PATH=$SITE_PATH/torch/share/cmake/Torch -DCMAKE_INSTALL_PREFIX=/usr/local ..
         make
+        make install
         ls -l
         
     - name: Package build
