@@ -46,7 +46,7 @@ jobs:
         USE_CCACHE: 1
       run: |
         export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
-        export CCACHE_SLOPPINESS=time_macros,pch_defines,clang_index_store,ivfsoverlay,include_file_ctime,include_file_mtime,modules,system_headers
+        export CCACHE_SLOPPINESS=time_macros,clang_index_store,ivfsoverlay,include_file_ctime,include_file_mtime,modules,system_headers,pch_defines
         export CCACHE_FILECLONE=true
         export CCACHE_DEPEND=true
         export CCACHE_COMPILERCHECK=content
@@ -58,7 +58,7 @@ jobs:
         
         mkdir build
         cd build
-        cmake -DCMAKE_PREFIX_PATH=$SITE_PATH/torch/share/cmake/Torch -DCMAKE_INSTALL_PREFIX=/usr/local ..
+        cmake -DCMAKE_PREFIX_PATH=$SITE_PATH/torch/share/cmake/Torch -DCMAKE_INSTALL_PREFIX=$HOME/.local ..
         make
         make install
         ls -l
@@ -66,8 +66,8 @@ jobs:
     - name: Package build
       run: |
         find . -name "*.whl"
-        mkdir artifacts
-        cp build/*.whl artifacts/
+        mkdir -p artifacts
+        #cp build/*.whl artifacts/
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
