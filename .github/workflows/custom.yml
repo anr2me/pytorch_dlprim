@@ -35,8 +35,8 @@ jobs:
     - name: Build
       run: |
         source .venv/bin/activate
-        PIP_PATH=$(which pip)
-        echo "PIP Path = $PIP_PATH"
+        LIBTORCH_PATH=$(find . -name "libtorch" -print -quit 2>/dev/null)
+        echo "LIBTORCH_PATH = $LIBTORCH_PATH"
         echo "VIRTUAL_ENV = $VIRTUAL_ENV"
         
         mkdir build
