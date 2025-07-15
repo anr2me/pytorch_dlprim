@@ -16,9 +16,10 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get upgrade -y
+        #sudo apt-get upgrade -y
         sudo apt-get install -y opencl-headers
-        sudo apt-get install -y beignet-opencl-icd #intel-compute-runtime
+        sudo apt-get install -y ocl-icd-opencl-dev
+        #sudo apt-get install -y intel-opencl-icd intel-compute-runtime
     
     - name: Verify OpenCL installation
       run: clinfo
@@ -31,7 +32,9 @@ jobs:
         make
       
     - name: Install
-      run: make install
+      run: |
+        cd build
+        make install
       
     - name: Test
       run: |
