@@ -23,9 +23,9 @@ jobs:
       run: |
         sudo apt-get update
         #sudo apt-get upgrade -y
-        sudo apt-get install -y opencl-headers clinfo
+        sudo apt-get install -y opencl-headers clinfo libsqlite3-dev
         sudo apt-get install -y ocl-icd-opencl-dev
-        sudo apt-get install -y intel-opencl-icd #intel-compute-runtime
+        #sudo apt-get install -y intel-opencl-icd #intel-compute-runtime
     
     - name: Verify OpenCL installation
       run: clinfo
@@ -41,8 +41,8 @@ jobs:
         
     - name: Build
       env:
-        #CC: clang
-        #CXX: clang++
+        CC: clang
+        CXX: clang++
         USE_CCACHE: 1
       run: |
         export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
@@ -67,9 +67,9 @@ jobs:
         
     - name: Package build
       run: |
-        #find . -name "*.whl"
         mkdir -p artifacts
-        cp -aR build/pytorch_ocl artifacts/
+        #cp -aR build/pytorch_ocl artifacts/
+        zip -r9 artifacts/pytorch_ocl.whl build/pytorch_ocl
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -85,4 +85,4 @@ jobs:
         cd -
         
         export PYTHONPATH=build
-        python mnist.py --device ocl:0
+        python mnist.py --device ocl
