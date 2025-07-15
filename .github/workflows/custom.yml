@@ -30,7 +30,7 @@ jobs:
         source .venv/bin/activate
         python3 -m pip install --upgrade pip
         pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
-        echo "Python Path = $(which python)"
+        echo "Python3 Path = $(which python3)"
       
     - name: Build
       run: |
