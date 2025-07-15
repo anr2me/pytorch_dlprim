@@ -32,6 +32,7 @@ jobs:
         pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
         echo "Python3 Path = $(which python3)"
         echo "Site(s) = $(python3 -m site)"
+        
     - name: Build
       run: |
         source .venv/bin/activate
@@ -43,6 +44,7 @@ jobs:
         cd build
         cmake -DCMAKE_PREFIX_PATH=$SITE_PATH/torch/share/cmake/Torch -DCMAKE_INSTALL_PREFIX=/usr/local ..
         make
+        ls -l
         
     - name: Package build
       run: |
