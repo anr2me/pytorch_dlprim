@@ -62,6 +62,8 @@ jobs:
         make
         make install
         ls -l
+        ls -l dlprimitives
+        ls -l pytorch_ocl
         
     - name: Package build
       run: |
@@ -77,6 +79,7 @@ jobs:
           
     - name: Test
       run: |
+        source .venv/bin/activate
         cd build
         make install
         cd -
