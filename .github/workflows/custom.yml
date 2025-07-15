@@ -23,6 +23,13 @@ jobs:
     
     - name: Verify OpenCL installation
       run: clinfo
+
+    - name: Install pytorch
+      run: |
+        python3 -m venv .venv
+        source .venv/bin/activate
+        python3 -m pip install --upgrade pip
+        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
       
     - name: Build
       run: |
@@ -30,13 +37,24 @@ jobs:
         cd build
         cmake -DCMAKE_PREFIX_PATH=$VIRTUAL_ENV/lib/python3.10/site-packages/torch/share/cmake/Torch -DCMAKE_INSTALL_PREFIX=/usr/local ..
         make
-      
-    - name: Install
+        
+    - name: Package build
+      run: |
+        find . -name "*.whl"
+        mkdir artifacts
+        cp build/*.whl artifacts/
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux build
+        path: artifacts/
+          
+    - name: Test
       run: |
         cd build
         make install
-      
-    - name: Test
-      run: |
+        cd -
+        
         export PYTHONPATH=build
         python mnist.py --device
