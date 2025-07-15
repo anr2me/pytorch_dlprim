@@ -1,0 +1,39 @@
+name: Build whl
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+          submodules: recursive
+          
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get upgrade -y
+        sudo apt-get install -y opencl-headers
+        sudo apt-get install -y beignet-opencl-icd #intel-compute-runtime
+    
+    - name: Verify OpenCL installation
+      run: clinfo
+      
+    - name: Build
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_PREFIX_PATH=$VIRTUAL_ENV/lib/python3.10/site-packages/torch/share/cmake/Torch -DCMAKE_INSTALL_PREFIX=/usr/local ..
+        make
+      
+    - name: Install
+      run: make install
+      
+    - name: Test
+      run: |
+        export PYTHONPATH=build
+        python mnist.py --device
