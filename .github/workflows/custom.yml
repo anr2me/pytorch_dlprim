@@ -60,16 +60,15 @@ jobs:
         cd build
         cmake -DCMAKE_PREFIX_PATH=$SITE_PATH/torch/share/cmake/Torch -DCMAKE_INSTALL_PREFIX=$HOME/.local ..
         make
-        make install
+        #make install
         ls -l
-        ls -l dlprimitives
         ls -l pytorch_ocl
         
     - name: Package build
       run: |
-        find . -name "*.whl"
+        #find . -name "*.whl"
         mkdir -p artifacts
-        #cp build/*.whl artifacts/
+        cp -aR build/pytorch_ocl artifacts/
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
@@ -85,4 +84,4 @@ jobs:
         cd -
         
         export PYTHONPATH=build
-        python mnist.py --device
+        python mnist.py --device ocl:0
