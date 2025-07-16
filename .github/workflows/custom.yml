@@ -69,10 +69,12 @@ jobs:
         
     - name: Package build
       run: |
-        mkdir -p artifacts
-        #cp -aR build/pytorch_ocl artifacts/
-        cd build
-        zip -r9 ../artifacts/pytorch_ocl.whl pytorch_ocl
+        mkdir -p artifacts/pytorch_ocl
+        cp -aR build/pytorch_ocl artifacts/pytorch_ocl/
+        cd artifacts/pytorch_ocl
+        poetry init
+        #cd build
+        #zip -r9 ../artifacts/pytorch_ocl.whl pytorch_ocl
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
