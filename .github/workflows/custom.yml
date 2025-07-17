@@ -86,6 +86,7 @@ jobs:
     - name: Package build
       run: |
         source .venv/bin/activate
+        rm -rf pytorch_ocl
         mkdir -p artifacts
         mkdir -p pytorch_ocl
         cp -aR build/pytorch_ocl pytorch_ocl/
@@ -112,35 +113,26 @@ jobs:
         ]
 
         [project.urls]
-        homepage = "https://github.com/artyom-beilis/pytorch_dlprim"
+        Homepage = "https://github.com/artyom-beilis/pytorch_dlprim"
 
         [build-system]
-        requires = ["poetry_core>=1.0.0", "setuptools"]
-
-        [tool.poetry.build]
-        script = "build.py"
-        generate-setup-file = true
+        requires = [
+          "setuptools >= 40.9.0",
+        ]
+        build-backend = "setuptools.build_meta"
         EOF
 
-        cat > build.py<<EOF
-        import setuptools
-
-        def build(setup_kwargs):
-          # Run targeted build separately as poetry does not support target builds yet
-          try:
-            setuptools.setup(
-              **setup_kwargs, 
-              script_args = ['bdist_wheel'],
-              options = { 
-                'bdist_wheel': { 'plat_name': 'any' },
-                'egg_info': { 'egg_base': './build/' }
-              }
-            )
-          except:
-            print("Failed to create targeted wheel")
-        EOF
+        cat > setup.cfg<<EOF
+        [bdist_wheel]
+        python-tag=cp312
         
-        poetry build --clean --format=wheel
+        [metadata]
+        platforms=linux
+        EOF
+
+        python -m build
+        #python setup.py bdist_wheel
+        #poetry build --clean --format=wheel
         cp -a dist/* ../artifacts/
         #cd build
         #zip -r9 ../artifacts/pytorch_ocl.whl pytorch_ocl
