@@ -74,11 +74,12 @@ jobs:
         cp -aR build/pytorch_ocl artifacts/pytorch_ocl/
         cd artifacts/pytorch_ocl
         #poetry init -n
+        git fetch --deepen=15000 --no-recurse-submodules --tags --force
         VERSION=$(git describe --always)
         python_full_version=$(python3 --version 2>&1)
         python_version_number=$(echo "$python_full_version" | awk '{print $2}')
-        TORCH_VER=$(python -c "import torch; print(torch.__version__)")
-        echo -e "Ver = $VERSION\nPythonVer = $python_version_number\nTorchVer = $TORCH_VER"
+        TORCH_VERSION=$(python -c "import torch; print(torch.__version__.split('+')[0])")
+        echo -e "Ver = $VERSION\nPythonVer = $python_version_number\nTorchVer = $TORCH_VERSION"
         cat > pyproject.toml<<EOF
         [project]
         name = "pytorch_ocl"
