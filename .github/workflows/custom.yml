@@ -124,10 +124,18 @@ jobs:
 
         cat > setup.cfg<<EOF
         [bdist_wheel]
-        python-tag=cp312
+        #python-tag=cp312
+        abi-tag=none
+        platform-tag=manylinux2014_aarch64
         
         [metadata]
-        platforms=linux
+        platforms=manylinux2014
+
+        [options]
+        include_package_data = True
+
+        [options.package_data]
+        * = *.so, *.pyd
         EOF
 
         python -m build
