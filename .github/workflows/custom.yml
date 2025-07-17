@@ -78,6 +78,7 @@ jobs:
         python_full_version=$(python3 --version 2>&1)
         python_version_number=$(echo "$python_full_version" | awk '{print $2}')
         TORCH_VER=$(python -c "import torch; print(torch.__version__)")
+        echo -e "Ver = $VERSION\nPythonVer = $python_version_number\nTorchVer = $TORCH_VER"
         cat > pyproject.toml<<EOF
         [project]
         name = "pytorch_ocl"
