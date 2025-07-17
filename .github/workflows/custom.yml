@@ -69,6 +69,7 @@ jobs:
         
     - name: Package build
       run: |
+        source .venv/bin/activate
         mkdir -p artifacts/pytorch_ocl
         cp -aR build/pytorch_ocl artifacts/pytorch_ocl/
         cd artifacts/pytorch_ocl
