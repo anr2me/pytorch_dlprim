@@ -81,7 +81,7 @@ jobs:
         cat > pyproject.toml<<EOF
         [project]
         name = "pytorch_ocl"
-        version = "$VERSION+torch$TORCH_VER"
+        version = "$VERSION"
         description = "OpenCL backend for pytorch"
         authors = [
           {name = "Artyom Beilis",email = "artyomtnk@yahoo.com"}
