@@ -129,9 +129,9 @@ jobs:
 
         cat > setup.cfg<<EOF
         [bdist_wheel]
-        #python-tag=cp312
-        #py-limited-api=abi3
-        plat-name=manylinux_$GLIBC_MAJOR_$GLIBC_MINOR_$ARCH
+        #python_tag=cp312
+        #py_limited_api=abi3
+        plat_name=manylinux_$GLIBC_MAJOR_$GLIBC_MINOR_$ARCH
         
         [metadata]
         platforms=$PLATFORM
