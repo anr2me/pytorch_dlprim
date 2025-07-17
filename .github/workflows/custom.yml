@@ -125,7 +125,7 @@ jobs:
         cat > setup.cfg<<EOF
         [bdist_wheel]
         #python-tag=cp312
-        abi-tag=none
+        #abi-tag=none
         platform-tag=manylinux2014_aarch64
         
         [metadata]
@@ -138,7 +138,7 @@ jobs:
         * = *.so, *.pyd
         EOF
 
-        python -m build
+        python -m build --wheel
         #python setup.py bdist_wheel
         #poetry build --clean --format=wheel
         cp -a dist/* ../artifacts/
