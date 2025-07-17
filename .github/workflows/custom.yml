@@ -74,6 +74,7 @@ jobs:
         cp -aR build/pytorch_ocl artifacts/pytorch_ocl/
         cd artifacts/pytorch_ocl
         poetry init -n
+        poetry build
         #cd build
         #zip -r9 ../artifacts/pytorch_ocl.whl pytorch_ocl
 
