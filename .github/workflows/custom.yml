@@ -34,7 +34,7 @@ jobs:
       run: |
         python3 -m venv .venv
         source .venv/bin/activate
-        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade pip poetry
         pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
         echo "Python3 Path = $(which python3)"
         echo "Site(s) = $(python3 -m site)"
