@@ -94,6 +94,7 @@ jobs:
         #poetry init -n
         
         VERSION=$(git describe --long --always --tags | sed 's/-g[0-9a-f]\+$//')
+        VERSION=$(echo "$VERSION" | sed 's/-/\.dev/1')
         read -r PYTHON_MAJOR PYTHON_MINOR _ < <(python -c 'import platform; print(" ".join(platform.python_version_tuple()[:2]))')
         TORCH_VERSION=$(python -c "import torch; print(torch.__version__)")
         TORCH_MAJOR=$(echo "$TORCH_VERSION" | awk -F'.' '{print $1}')
