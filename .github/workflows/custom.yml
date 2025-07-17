@@ -98,7 +98,11 @@ jobs:
         python_version_number=$(echo "$python_full_version" | awk '{print $2}')
         TORCH_VERSION=$(python -c "import torch; print(torch.__version__.split('+')[0])")
         PLATFORM=$(python -c "import sysconfig; print(sysconfig.get_platform())")
-        echo -e "Ver = $VERSION\nPythonVer = $python_version_number\nTorchVer = $TORCH_VERSION\nPlatform = $PLATFORM"
+        ARCH=$(uname -m)
+        GLIBC_VERSION=$(ldd --version | head -n 1 | awk '{print $NF}')
+        GLIBC_MAJOR=$(echo $GLIBC_VERSION | cut -d'.' -f1)
+        GLIBC_MINOR=$(echo $GLIBC_VERSION | cut -d'.' -f2)
+        echo -e "Ver = $VERSION\nPythonVer = $python_version_number\nTorchVer = $TORCH_VERSION\nPlatform = $PLATFORM\nGLIBCVer = $GLIBC_VERSION"
         cat > pyproject.toml<<EOF
         [project]
         name = "pytorch_ocl"
@@ -126,11 +130,11 @@ jobs:
         cat > setup.cfg<<EOF
         [bdist_wheel]
         #python-tag=cp312
-        #py-limited-api=none
-        plat-name=manylinux2014_aarch64
+        #py-limited-api=abi3
+        plat-name=manylinux_$GLIBC_MAJOR_$GLIBC_MINOR_$ARCH
         
         [metadata]
-        platforms=manylinux2014_aarch64
+        platforms=$PLATFORM
 
         [options]
         include_package_data = True
