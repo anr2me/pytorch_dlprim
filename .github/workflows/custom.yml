@@ -94,27 +94,28 @@ jobs:
         #poetry init -n
         
         VERSION=$(git describe --long --always --tags | sed 's/-g[0-9a-f]\+$//')
-        python_full_version=$(python3 --version 2>&1)
-        python_version_number=$(echo "$python_full_version" | awk '{print $2}')
-        TORCH_VERSION=$(python -c "import torch; print(torch.__version__.split('+')[0])")
+        read -r PYTHON_MAJOR PYTHON_MINOR _ < <(python -c 'import platform; print(" ".join(platform.python_version_tuple()[:2]))')
+        TORCH_VERSION=$(python -c "import torch; print(torch.__version__)")
+        TORCH_MAJOR=$(echo "$TORCH_VERSION" | awk -F'.' '{print $1}')
+        TORCH_MINOR=$(echo "$TORCH_VERSION" | awk -F'.' '{print $2}')
         PLATFORM=$(python -c "import sysconfig; print(sysconfig.get_platform())")
         ARCH=$(uname -m)
         GLIBC_VERSION=$(ldd --version | head -n 1 | awk '{print $NF}')
         GLIBC_MAJOR=$(echo $GLIBC_VERSION | cut -d'.' -f1)
         GLIBC_MINOR=$(echo $GLIBC_VERSION | cut -d'.' -f2)
-        echo -e "Ver = $VERSION\nPythonVer = $python_version_number\nTorchVer = $TORCH_VERSION\nPlatform = $PLATFORM\nGLIBCVer = $GLIBC_VERSION"
+        echo -e "Ver = $VERSION\nPythonVer = $PYTHON_MAJOR.$PYTHON_MINOR\nTorchVer = $TORCH_VERSION\nPlatform = $PLATFORM\nGLIBCVer = $GLIBC_VERSION"
         cat > pyproject.toml<<EOF
         [project]
         name = "pytorch_ocl"
-        version = "$VERSION+torch$TORCH_VERSION"
+        version = "$VERSION+torch$TORCH_MAJOR.$TORCH_MINOR"
         description = "OpenCL backend for pytorch"
         authors = [
           {name = "Artyom Beilis",email = "artyomtnk@yahoo.com"}
         ]
         license = { text = "MIT" }
-        requires-python = ">=$python_version_number"
+        requires-python = ">=$PYTHON_MAJOR.$PYTHON_MINOR"
         dependencies = [
-          "torch==$TORCH_VERSION",
+          "torch==$TORCH_MAJOR.$TORCH_MINOR",
         ]
 
         [project.urls]
@@ -129,9 +130,9 @@ jobs:
 
         cat > setup.cfg<<EOF
         [bdist_wheel]
-        #python_tag=cp312
-        #py_limited_api=abi3
-        plat_name=manylinux_$GLIBC_MAJOR_$GLIBC_MINOR_$ARCH
+        #python_tag=cp$PYTHON_MAJOR$PYTHON_MINOR
+        #py_limited_api=abi$PYTHON_MAJOR
+        plat_name=manylinux_${GLIBC_MAJOR}_${GLIBC_MINOR}_$ARCH
         
         [metadata]
         platforms=$PLATFORM
