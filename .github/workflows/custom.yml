@@ -91,7 +91,7 @@ jobs:
         cd artifacts/pytorch_ocl
         #poetry init -n
         
-        VERSION=$(git describe --always)
+        VERSION=$(git describe --always --tags)
         python_full_version=$(python3 --version 2>&1)
         python_version_number=$(echo "$python_full_version" | awk '{print $2}')
         TORCH_VERSION=$(python -c "import torch; print(torch.__version__.split('+')[0])")
@@ -99,7 +99,7 @@ jobs:
         cat > pyproject.toml<<EOF
         [project]
         name = "pytorch_ocl"
-        version = "$VERSION"
+        version = "$VERSION+torch$TORCH_VERSION"
         description = "OpenCL backend for pytorch"
         authors = [
           {name = "Artyom Beilis",email = "artyomtnk@yahoo.com"}
@@ -107,13 +107,14 @@ jobs:
         license = { text = "MIT" }
         requires-python = ">=$python_version_number"
         dependencies = [
+          "torch==$TORCH_VERSION",
         ]
 
         [project.urls]
         homepage = "https://github.com/artyom-beilis/pytorch_dlprim"
         EOF
         
-        poetry build
+        poetry build --clean --format=wheel
         #cd build
         #zip -r9 ../artifacts/pytorch_ocl.whl pytorch_ocl
 
