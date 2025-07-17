@@ -1,4 +1,4 @@
-name: Build whl
+name: Build Wheel
 
 on:
   workflow_dispatch: {}
@@ -6,34 +6,165 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     
     steps:
     - uses: actions/checkout@v4
       with:
           submodules: recursive
+
+    - name: Check Valid Version Tags
+      id: valid-tags
+      shell: bash
+      run: |
+        # This is required for git describe --always to work properly
+        git fetch --deepen=15000 --no-recurse-submodules --tags --force || exit 0
+        echo "count=$(git tag -l 'v[0-9]*' | wc -l | tr -d ' ')" >> $GITHUB_OUTPUT # $env:GITHUB_OUTPUT on pwsh
+
+    - name: Fetch upstream tags # Fallback to fetching tags from upstream
+      if: steps.valid-tags.outputs.count == '0'
+      shell: bash
+      run: |
+        # TODO: should try to fetch tags from whereever this repo was forked from before fetching from official repo
+        git remote add upstream https://github.com/artyom-beilis/pytorch_dlprim
+        git fetch --deepen=15000 --no-recurse-submodules --tags --force upstream || exit 0
+
+    - name: Setup ccache
+      uses: hendrikmuhs/ccache-action@63069e3931dedbf3b63792097479563182fe70d1 # v1.2.18
+      with:
+        key: linux
+        create-symlink: true
           
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get upgrade -y
-        sudo apt-get install -y opencl-headers
-        sudo apt-get install -y beignet-opencl-icd #intel-compute-runtime
+        #sudo apt-get upgrade -y
+        sudo apt-get install -y opencl-headers clinfo libsqlite3-dev
+        sudo apt-get install -y ocl-icd-opencl-dev
+        #sudo apt-get install -y intel-opencl-icd #intel-compute-runtime
     
     - name: Verify OpenCL installation
       run: clinfo
-      
-    - name: Build
+
+    - name: Install pytorch
       run: |
+        python3 -m venv .venv
+        source .venv/bin/activate
+        python3 -m pip install --upgrade pip poetry
+        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+        echo "Python3 Path = $(which python3)"
+        echo "Site(s) = $(python3 -m site)"
+        
+    - name: Build
+      env:
+        CC: clang
+        CXX: clang++
+        CPPFLAGS: -fno-pie -no-pie -static -Wl,-no_pie
+        LDFLAGS: -no-pie
+        USE_CCACHE: 1
+      run: |
+        export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+        export CCACHE_SLOPPINESS=time_macros,clang_index_store,ivfsoverlay,include_file_ctime,include_file_mtime,modules,system_headers,pch_defines
+        export CCACHE_FILECLONE=true
+        export CCACHE_DEPEND=true
+        export CCACHE_COMPILERCHECK=content
+        
+        source .venv/bin/activate
+        SITE_PATH=$(find . -name "site-packages" -print -quit 2>/dev/null)
+        echo "SITE_PATH = $SITE_PATH"
+        echo "VIRTUAL_ENV = $VIRTUAL_ENV"
+        
         mkdir build
         cd build
-        cmake -DCMAKE_PREFIX_PATH=$VIRTUAL_ENV/lib/python3.10/site-packages/torch/share/cmake/Torch -DCMAKE_INSTALL_PREFIX=/usr/local ..
+        cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_PREFIX_PATH=$SITE_PATH/torch/share/cmake/Torch -DCMAKE_INSTALL_PREFIX=$HOME/.local ..
         make
-      
-    - name: Install
-      run: make install
-      
+        #make install
+        ls -l
+        ls -l pytorch_ocl
+        ldd pytorch_ocl/pt_ocl.so
+        
+    - name: Package build
+      run: |
+        source .venv/bin/activate
+        rm -rf pytorch_ocl
+        mkdir -p artifacts
+        mkdir -p pytorch_ocl
+        cp -aR build/pytorch_ocl pytorch_ocl/
+        cd pytorch_ocl
+        #poetry init -n
+        
+        VERSION=$(git describe --long --always --tags | sed 's/-g[0-9a-f]\+$//')
+        VERSION=$(echo "$VERSION" | sed 's/-/\.dev/1')
+        read -r PYTHON_MAJOR PYTHON_MINOR _ < <(python -c 'import platform; print(" ".join(platform.python_version_tuple()[:2]))')
+        TORCH_VERSION=$(python -c "import torch; print(torch.__version__)")
+        TORCH_MAJOR=$(echo "$TORCH_VERSION" | awk -F'.' '{print $1}')
+        TORCH_MINOR=$(echo "$TORCH_VERSION" | awk -F'.' '{print $2}')
+        PLATFORM=$(python -c "import sysconfig; print(sysconfig.get_platform())")
+        ARCH=$(uname -m)
+        GLIBC_VERSION=$(ldd --version | head -n 1 | awk '{print $NF}')
+        GLIBC_MAJOR=$(echo $GLIBC_VERSION | cut -d'.' -f1)
+        GLIBC_MINOR=$(echo $GLIBC_VERSION | cut -d'.' -f2)
+        echo -e "Ver = $VERSION\nPythonVer = $PYTHON_MAJOR.$PYTHON_MINOR\nTorchVer = $TORCH_VERSION\nPlatform = $PLATFORM\nGLIBCVer = $GLIBC_VERSION"
+        cat > pyproject.toml<<EOF
+        [build-system]
+        requires = [
+          "setuptools >= 40.9.0",
+        ]
+        build-backend = "setuptools.build_meta"
+        
+        [project]
+        name = "pytorch_ocl"
+        version = "$VERSION+torch$TORCH_MAJOR.$TORCH_MINOR"
+        description = "OpenCL backend for pytorch"
+        authors = [
+          {name = "Artyom Beilis",email = "artyomtnk@yahoo.com"}
+        ]
+        license = { text = "MIT" }
+        requires-python = ">=$PYTHON_MAJOR.$PYTHON_MINOR"
+        dependencies = [
+          "torch==$TORCH_MAJOR.$TORCH_MINOR",
+        ]
+
+        [project.urls]
+        Homepage = "https://github.com/artyom-beilis/pytorch_dlprim"
+        EOF
+
+        cat > setup.cfg<<EOF
+        [bdist_wheel]
+        #python_tag=cp$PYTHON_MAJOR$PYTHON_MINOR
+        #py_limited_api=abi$PYTHON_MAJOR
+        plat_name=manylinux_${GLIBC_MAJOR}_${GLIBC_MINOR}_$ARCH
+        
+        [metadata]
+        platforms=$PLATFORM
+
+        [options]
+        include_package_data = True
+
+        [options.package_data]
+        * = *.so, *.pyd
+        EOF
+
+        python -m build --wheel
+        #python setup.py bdist_wheel
+        #poetry build --clean --format=wheel
+        cp -a dist/* ../artifacts/
+        #cd build
+        #zip -r9 ../artifacts/pytorch_ocl.whl pytorch_ocl
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux build
+        path: artifacts/
+          
     - name: Test
       run: |
+        source .venv/bin/activate
+        cd build
+        make install
+        cd -
+        
         export PYTHONPATH=build
-        python mnist.py --device
+        python mnist.py --device ocl
+        
