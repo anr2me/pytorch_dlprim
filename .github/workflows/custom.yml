@@ -86,9 +86,10 @@ jobs:
     - name: Package build
       run: |
         source .venv/bin/activate
-        mkdir -p artifacts/pytorch_ocl
-        cp -aR build/pytorch_ocl artifacts/pytorch_ocl/
-        cd artifacts/pytorch_ocl
+        mkdir -p artifacts
+        mkdir -p pytorch_ocl
+        cp -aR build/pytorch_ocl pytorch_ocl/
+        cd pytorch_ocl
         #poetry init -n
         
         VERSION=$(git describe --long --always --tags | sed 's/-g[0-9a-f]\+$//')
@@ -115,6 +116,7 @@ jobs:
         EOF
         
         poetry build --clean --format=wheel
+        cp -a dist/* ../artifacts/
         #cd build
         #zip -r9 ../artifacts/pytorch_ocl.whl pytorch_ocl
 
