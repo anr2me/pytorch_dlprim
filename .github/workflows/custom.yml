@@ -106,6 +106,12 @@ jobs:
         GLIBC_MINOR=$(echo $GLIBC_VERSION | cut -d'.' -f2)
         echo -e "Ver = $VERSION\nPythonVer = $PYTHON_MAJOR.$PYTHON_MINOR\nTorchVer = $TORCH_VERSION\nPlatform = $PLATFORM\nGLIBCVer = $GLIBC_VERSION"
         cat > pyproject.toml<<EOF
+        [build-system]
+        requires = [
+          "setuptools >= 40.9.0",
+        ]
+        build-backend = "setuptools.build_meta"
+        
         [project]
         name = "pytorch_ocl"
         version = "$VERSION+torch$TORCH_MAJOR.$TORCH_MINOR"
@@ -121,12 +127,6 @@ jobs:
 
         [project.urls]
         Homepage = "https://github.com/artyom-beilis/pytorch_dlprim"
-
-        [build-system]
-        requires = [
-          "setuptools >= 40.9.0",
-        ]
-        build-backend = "setuptools.build_meta"
         EOF
 
         cat > setup.cfg<<EOF
